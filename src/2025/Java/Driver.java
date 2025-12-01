@@ -1,3 +1,6 @@
+import Days.DailyChallenge;
+import Days.Day1;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Objects;
@@ -10,6 +13,6 @@ public class Driver {
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(dailyChallenge.Part1());
+        System.out.println(dailyChallenge.Part2());
     }
 }
