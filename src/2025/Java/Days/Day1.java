@@ -48,8 +48,9 @@ public class Day1 implements DailyChallenge {
                 }
                 if (line.charAt(0) == 'L') {
                     int distance = Integer.parseInt(line.substring(1));
-                    // if dialPosition - distance < 0, we're passing zero at least once
-                    // if dialPosition - distance < -100, we're passing zero at least twice
+                    // if 100 - dialPosition < distance, we're passing zero at least once
+                    // if 100 - dialPosition + distance >= 200, we're passing zero at least twice
+                    // if we're at 0, then 100 - 0 always counts as passing zero once; so handle this edge case specially
                     int addToPassZeroCount = (int) Math.floor((double) ((dialPosition == 0 ? 0 : 100 - dialPosition) + distance) / 100);
                     passZeroCount += addToPassZeroCount;
                     dialPosition = Math.floorMod(dialPosition - distance, 100);
