@@ -12,7 +12,7 @@ public class Day1 implements DailyChallenge {
         this.inputFile = inputFile;
     }
 
-    public int Part1(boolean debug) {
+    public long Part1(boolean debug) {
         int dialPosition = 50;
         int restAtZeroCount = 0;
         try (Scanner scanner = new Scanner(this.inputFile)) {
@@ -37,7 +37,7 @@ public class Day1 implements DailyChallenge {
         return restAtZeroCount;
     }
 
-    public int Part2(boolean debug) {
+    public long Part2(boolean debug) {
         int dialPosition = 50;
         int passZeroCount = 0;
         try (Scanner scanner = new Scanner(this.inputFile)) {

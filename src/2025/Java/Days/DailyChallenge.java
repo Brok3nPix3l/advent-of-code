@@ -1,12 +1,12 @@
 package Days;
 
 public interface DailyChallenge {
-    default int Part1() {
+    default long Part1() {
         return Part1(false);
     }
-    public int Part1(boolean debug);
-    default int Part2() {
+    public long Part1(boolean debug);
+    default long Part2() {
         return Part2(false);
     }
-    public int Part2(boolean debug);
+    public long Part2(boolean debug);
 }

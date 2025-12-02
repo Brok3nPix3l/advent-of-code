@@ -12,6 +12,7 @@ public class Driver {
         String dayNumber;
         String fileSuffix = "";
         int part;
+        boolean debug = false;
         Properties properties = parseArgs(args);
         if (properties.containsKey("dayNumber")) {
             dayNumber = properties.getProperty("dayNumber");
@@ -29,6 +30,9 @@ public class Driver {
         } else {
             throw new RuntimeException("part is required");
         }
+        if (properties.containsKey("debug")) {
+            debug = Boolean.parseBoolean(properties.getProperty("debug"));
+        }
 
         DailyChallenge dailyChallenge;
         try {
@@ -43,8 +47,13 @@ public class Driver {
             throw new RuntimeException(e);
         }
         try {
-            Method partMethod = dailyChallenge.getClass().getMethod("Part" + part);
-            System.out.println(partMethod.invoke(dailyChallenge));
+            if (debug) {
+                Method partMethod = dailyChallenge.getClass().getMethod("Part" + part, boolean.class);
+                System.out.println(partMethod.invoke(dailyChallenge, debug));
+            } else {
+                Method partMethod = dailyChallenge.getClass().getMethod("Part" + part);
+                System.out.println(partMethod.invoke(dailyChallenge));
+            }
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
