@@ -61,9 +61,10 @@ public class Driver {
 
     private static Properties parseArgs(String[] args) {
         Properties properties = new Properties();
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].startsWith("-") && args[i].length() > 1 && args.length >= i + 1) {
+        for (int i = 0; i < args.length - 1; i++) {
+            if (args[i].startsWith("-") && args[i].length() > 1) {
                 properties.setProperty(args[i].substring(1), args[i + 1]);
+                i++;
             }
         }
         return properties;
