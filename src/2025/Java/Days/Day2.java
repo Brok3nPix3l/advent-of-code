@@ -20,7 +20,7 @@ public class Day2 implements DailyChallenge {
                 String idRange = scanner.next();
                 String[] ids = idRange.split("-");
                 for (long i = Long.parseLong(ids[0]); i <= Long.parseLong(ids[1]); i++) {
-                    if (isInvalid(i)) {
+                    if (isDoublet(i)) {
                         invalidIdSum += i;
                     }
                 }
@@ -31,7 +31,12 @@ public class Day2 implements DailyChallenge {
         return invalidIdSum;
     }
 
-    private boolean isInvalid(long number) {
+    /**
+     * A number with the same sequence of digits repeated twice is sometimes called a doublet. Checks if the provided number is exactly a series of numbers repeated exactly once. e.g. 1212 or 123123
+     * @param number number to be evaluated
+     * @return true if is a doublet, false otherwise
+     */
+    private boolean isDoublet(long number) {
         String str = String.valueOf(number);
         if (str.length() % 2 != 0) {
             return false;
@@ -45,24 +50,43 @@ public class Day2 implements DailyChallenge {
     }
 
     public long Part2(boolean debug) {
-        throw new RuntimeException("Not implemented yet");
-//        StringBuilder sb = new StringBuilder();
-//        for (int i = 0; i < ids[0].length(); i++) {
-//            if (ids[0].charAt(i) != ids[1].charAt(i)) {
-//                break;
-//            }
-//            sb.append(ids[0].charAt(i));
-//        }
-//        String prefix = sb.toString();
-//        int minLength = ids[0].length();
-//        int maxLength = ids[1].length();
-//        int diff = maxLength - minLength;
-//        // if there is a shared prefix, then all invalid IDs MUST start with that prefix
-//        // else, all prefixes from low to high could have invalid IDs
-//            // if low and high are the same length, can iterate from low's first digit to high's first digit
-//            // else, low's prefix is its first digit and high's prefix is its first -> 'diff' digit. e.g. 95 -> 115 the prefixes are 9 and 11
-//        if (debug) {
-//            System.out.println("ids: " + Arrays.toString(ids) + " prefix=" + prefix + " minLength=" + minLength + " maxLength=" + maxLength + " diff=" + diff);
-//        }
+        long invalidIdSum = 0;
+        try (Scanner scanner = new Scanner(this.inputFile)) {
+            scanner.useDelimiter(",");
+            while (scanner.hasNextLine()) {
+                String idRange = scanner.next();
+                String[] ids = idRange.split("-");
+                for (long i = Long.parseLong(ids[0]); i <= Long.parseLong(ids[1]); i++) {
+                    if (isRepeatedDigitSequence(i)) {
+                        if (debug) {
+                            System.out.println(i + " isRepeatedDigitSequence");
+                        }
+                        invalidIdSum += i;
+                    }
+                }
+            }
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        return invalidIdSum;
+    }
+
+    private boolean isRepeatedDigitSequence(long number) {
+        String str = String.valueOf(number);
+        outer:
+        for (int size = 1; size <= str.length() / 2; size++) {
+            if (str.length() % size != 0) {
+                continue;
+            }
+            for (int i = 0; i < size; i++) {
+                for (int j = i + size; j < str.length(); j += size) {
+                    if (str.charAt(i) != str.charAt(j)) {
+                        continue outer;
+                    }
+                }
+            }
+            return true;
+        }
+        return false;
     }
 }
