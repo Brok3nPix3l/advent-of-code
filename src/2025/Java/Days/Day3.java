@@ -2,10 +2,7 @@ package Days;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class Day3 implements DailyChallenge {
     File inputFile;
@@ -65,6 +62,37 @@ public class Day3 implements DailyChallenge {
     }
 
     public long Part2(boolean debug) {
-        throw new RuntimeException("Not implemented yet");
+        long totalJoltage = 0L;
+        try (Scanner scanner = new Scanner(this.inputFile)) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                if (debug) {
+                    System.out.println("\n" + line);
+                }
+                Stack<Character> stack = new Stack<>();
+                for (int i = 0; i < line.length(); i++) {
+                    while (!stack.isEmpty() && stack.peek() < line.charAt(i) && stack.size() + line.length() - i > 12) {
+                        stack.pop();
+                    }
+                    if (stack.size() < 12) {
+                        stack.push(line.charAt(i));
+                    }
+                    if (debug) {
+                        System.out.println(stack);
+                    }
+                }
+                long joltage = Long.parseLong(stack.toString().replaceAll("[\\[\\], ]", ""));
+                if (debug) {
+                    System.out.println(joltage + " joltage");
+                }
+                totalJoltage += joltage;
+                if (debug) {
+                    System.out.println(totalJoltage + " total joltage");
+                }
+            }
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        return totalJoltage;
     }
 }
