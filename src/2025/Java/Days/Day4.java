@@ -7,6 +7,7 @@ import java.util.*;
 public class Day4 implements DailyChallenge {
     File inputFile;
     static final char ROLL_OF_PAPER = '@';
+    static final String NOT_ROLL_OF_PAPER = ".";
 
     public Day4(File inputFile) throws FileNotFoundException {
         new Scanner(inputFile);
@@ -60,6 +61,40 @@ public class Day4 implements DailyChallenge {
     }
 
     public long Part2(boolean debug) {
-        throw new RuntimeException("Not implemented yet");
+        try (Scanner scanner = new Scanner(this.inputFile)) {
+            List<String> lines = new ArrayList<>();
+            while (scanner.hasNextLine()) {
+                lines.add(scanner.nextLine());
+            }
+            if (debug) {
+                System.out.println(lines);
+            }
+            long ans = 0L;
+            long paperRollsRemovedInCurrentCheck;
+            List<String> nextLines;
+            do {
+                paperRollsRemovedInCurrentCheck = 0L;
+                 nextLines = new ArrayList<>();
+                for (int i = 0; i < lines.size(); i++) {
+                    String currentLine = lines.get(i);
+                    StringBuilder nextLine = new StringBuilder(currentLine);
+                    for (int j = 0, len = currentLine.length(); j < len; j++) {
+                        if (currentLine.charAt(j) == ROLL_OF_PAPER && hasFewerThanFourAdjacentRollsOfPaper(i, j, lines)) {
+                            if (debug) {
+                                System.out.println("(" + i + "," + j + ")");
+                            }
+                            paperRollsRemovedInCurrentCheck++;
+                            nextLine.replace(j, j + 1, NOT_ROLL_OF_PAPER);
+                        }
+                    }
+                    nextLines.add(nextLine.toString());
+                }
+                ans += paperRollsRemovedInCurrentCheck;
+                lines = nextLines;
+            } while (paperRollsRemovedInCurrentCheck > 0);
+            return ans;
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
