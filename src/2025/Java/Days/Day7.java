@@ -67,18 +67,12 @@ public class Day7 implements DailyChallenge {
         return splitCount;
     }
 
-    Map<Position, Long> memo = new HashMap<>();
-    List<String> lines = new ArrayList<>();
-    boolean debug;
-    long memoMapHit = 0L;
-    long memoMapMiss = 0L;
 
     public long Part2(boolean debug) {
-        this.debug = debug;
         long timelineCount;
         try (Scanner scanner = new Scanner(this.inputFile)) {
             int[] startingPosition = new int[2];
-            this.lines = new ArrayList<>();
+            List<String> lines = new ArrayList<>();
             int row = 0;
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
@@ -93,8 +87,8 @@ public class Day7 implements DailyChallenge {
                 System.out.println(Arrays.toString(startingPosition));
                 System.out.println(lines);
             }
-            this.memo = new HashMap<>();
-            timelineCount = traverse(Position.fromArray(startingPosition));
+            Map<Position, Long> memo = new HashMap<>();
+            timelineCount = traverse(Position.fromArray(startingPosition), memo, lines);
             // dfs
             // call recursive function on starting node
             // each time it reaches a fork, it'll call the recursive function for each new node
@@ -106,16 +100,9 @@ public class Day7 implements DailyChallenge {
         return timelineCount;
     }
 
-    private long traverse(Position pos) {
+    private long traverse(Position pos, Map<Position, Long> memo, List<String> lines) {
         if (memo.containsKey(pos)) {
-            memoMapHit++;
             return memo.get(pos);
-        }
-        memoMapMiss++;
-        if (debug && memoMapHit + memoMapMiss % 1000 == 0) {
-            System.out.println("memo map hit " + 1.0 * memoMapHit / (memoMapHit + memoMapMiss));
-//            System.out.println("traversing " + Arrays.toString(pos));
-//            System.out.println("memo: " + memo.entrySet().stream().map(e -> Arrays.toString(e.getKey()) + " -> " + e.getValue()).toList());
         }
         long timelineCount = 0L;
         if (pos.getRow() >= lines.size() - 1) {
@@ -125,15 +112,15 @@ public class Day7 implements DailyChallenge {
             case SPLITTER:
                 // add left split
                 if (pos.getColumn() > 0) {
-                    timelineCount += traverse(new Position(pos.getRow() + 1, pos.getColumn() - 1));
+                    timelineCount += traverse(new Position(pos.getRow() + 1, pos.getColumn() - 1), memo, lines);
                 }
                 // add right split
                 if (pos.getColumn() < lines.get(pos.getRow() + 1).length() - 1) {
-                    timelineCount += traverse(new Position(pos.getRow() + 1, pos.getColumn() + 1));
+                    timelineCount += traverse(new Position(pos.getRow() + 1, pos.getColumn() + 1), memo, lines);
                 }
                 break;
             case EMPTY_SPACE:
-                timelineCount += traverse(new Position(pos.getRow() + 1, pos.getColumn()));
+                timelineCount += traverse(new Position(pos.getRow() + 1, pos.getColumn()), memo, lines);
         }
         memo.put(pos, timelineCount);
         return timelineCount;
