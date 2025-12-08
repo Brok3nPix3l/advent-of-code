@@ -113,12 +113,60 @@ public class Day8 implements DailyChallenge {
     }
 
     public long Part2(boolean debug) {
-        throw new RuntimeException("Not implemented yet");
-//        try (Scanner scanner = new Scanner(this.inputFile)) {
-//            while (scanner.hasNextLine()) {
-//            }
-//        } catch (FileNotFoundException e) {
-//            throw new RuntimeException(e);
-//        }
+        long ans;
+        try (Scanner scanner = new Scanner(this.inputFile)) {
+            List<Position3D> positions = new ArrayList<>();
+            Map<Integer,Map<Integer, Double>> connections = new HashMap<>();
+            PriorityQueue<List<Integer>> potentialConnections = new PriorityQueue<>(Comparator.comparingDouble(l -> connections.get(l.get(0)).get(l.get(1))));
+            List<Integer> connectedTo = new ArrayList<>();
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                String[] tokens = line.split(",");
+                Position3D pos = Position3D.fromArray(tokens);
+                positions.add(pos);
+                for (int i = 0; i < positions.size() - 1; i++) {
+                    connections.computeIfAbsent(i, a -> new HashMap<>()).put(positions.size() - 1, euclideanDistance(positions.get(i), pos));
+                    connections.computeIfAbsent(positions.size() - 1, a -> new HashMap<>()).put(i, euclideanDistance(positions.get(i), pos));
+                    potentialConnections.add(Arrays.asList(i, positions.size() - 1));
+                }
+                connectedTo.add(positions.size() - 1);
+            }
+            Map<Integer,Integer> circuitSizes = determineCircuitSizes(positions, connectedTo);
+            int positionA = 0;
+            int positionB = 0;
+            while (circuitSizes.values().stream().max(Comparator.naturalOrder()).orElse(0) < positions.size() && !potentialConnections.isEmpty()) {
+                List<Integer> connectionToAdd = potentialConnections.poll();
+                positionA = connectionToAdd.get(0);
+                positionB = connectionToAdd.get(1);
+                if (debug) {
+                    System.out.println("connectionToAdd: " + connectionToAdd);
+                }
+                int aIsConnectedTo = connectedTo.get(positionA);
+                int bIsConnectedTo = connectedTo.get(positionB);
+                if (aIsConnectedTo == positionA && bIsConnectedTo == positionB) {
+                    connectedTo.set(positionB, positionA);
+                    continue;
+                }
+                int rootPositionAIsConnectedTo = positionA;
+                while (aIsConnectedTo != rootPositionAIsConnectedTo) {
+                    rootPositionAIsConnectedTo = aIsConnectedTo;
+                    aIsConnectedTo = connectedTo.get(rootPositionAIsConnectedTo);
+                }
+                int rootPositionBIsConnectedTo = positionB;
+                while (bIsConnectedTo != rootPositionBIsConnectedTo) {
+                    rootPositionBIsConnectedTo = bIsConnectedTo;
+                    bIsConnectedTo = connectedTo.get(rootPositionBIsConnectedTo);
+                }
+                connectedTo.set(rootPositionBIsConnectedTo, rootPositionAIsConnectedTo);
+                circuitSizes = determineCircuitSizes(positions, connectedTo);
+            }
+            if (debug) {
+                System.out.println("circuitSizes: " + circuitSizes.entrySet().stream().sorted(Comparator.comparingInt(Map.Entry::getValue)).toList());
+            }
+            ans = (long) positions.get(positionA).x() * positions.get(positionB).x();
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        return ans;
     }
 }
