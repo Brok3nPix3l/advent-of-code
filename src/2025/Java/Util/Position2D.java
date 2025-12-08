@@ -2,17 +2,17 @@ package Util;
 
 import java.util.Objects;
 
-public class Position {
+public class Position2D {
     private int row;
     private int column;
 
-    public Position(int row, int column) {
+    public Position2D(int row, int column) {
         this.row = row;
         this.column = column;
     }
 
-    public static Position fromArray(int[] startingPosition) {
-        return new Position(startingPosition[0], startingPosition[1]);
+    public static Position2D fromArray(int[] startingPosition) {
+        return new Position2D(startingPosition[0], startingPosition[1]);
     }
 
     public int getRow() {
@@ -37,7 +37,7 @@ public class Position {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        Position position = (Position) o;
+        Position2D position = (Position2D) o;
         return row == position.row && column == position.column;
     }
 

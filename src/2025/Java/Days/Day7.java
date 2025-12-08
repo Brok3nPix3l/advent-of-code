@@ -1,6 +1,6 @@
 package Days;
 
-import Util.Position;
+import Util.Position2D;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -87,8 +87,8 @@ public class Day7 implements DailyChallenge {
                 System.out.println(Arrays.toString(startingPosition));
                 System.out.println(lines);
             }
-            Map<Position, Long> memo = new HashMap<>();
-            timelineCount = traverse(Position.fromArray(startingPosition), memo, lines);
+            Map<Position2D, Long> memo = new HashMap<>();
+            timelineCount = traverse(Position2D.fromArray(startingPosition), memo, lines);
             // dfs
             // call recursive function on starting node
             // each time it reaches a fork, it'll call the recursive function for each new node
@@ -100,7 +100,7 @@ public class Day7 implements DailyChallenge {
         return timelineCount;
     }
 
-    private long traverse(Position pos, Map<Position, Long> memo, List<String> lines) {
+    private long traverse(Position2D pos, Map<Position2D, Long> memo, List<String> lines) {
         if (memo.containsKey(pos)) {
             return memo.get(pos);
         }
@@ -112,15 +112,15 @@ public class Day7 implements DailyChallenge {
             case SPLITTER:
                 // add left split
                 if (pos.getColumn() > 0) {
-                    timelineCount += traverse(new Position(pos.getRow() + 1, pos.getColumn() - 1), memo, lines);
+                    timelineCount += traverse(new Position2D(pos.getRow() + 1, pos.getColumn() - 1), memo, lines);
                 }
                 // add right split
                 if (pos.getColumn() < lines.get(pos.getRow() + 1).length() - 1) {
-                    timelineCount += traverse(new Position(pos.getRow() + 1, pos.getColumn() + 1), memo, lines);
+                    timelineCount += traverse(new Position2D(pos.getRow() + 1, pos.getColumn() + 1), memo, lines);
                 }
                 break;
             case EMPTY_SPACE:
-                timelineCount += traverse(new Position(pos.getRow() + 1, pos.getColumn()), memo, lines);
+                timelineCount += traverse(new Position2D(pos.getRow() + 1, pos.getColumn()), memo, lines);
         }
         memo.put(pos, timelineCount);
         return timelineCount;
