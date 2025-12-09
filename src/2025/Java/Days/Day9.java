@@ -4,10 +4,7 @@ import Util.Point2D;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class Day9 implements DailyChallenge {
     File inputFile;
@@ -70,61 +67,141 @@ public class Day9 implements DailyChallenge {
             if (debug) {
                 System.out.println("Max row: " + maxRow + " max column: " + maxColumn);
             }
-            int[][] preSumRows = new int[maxRow + 2][maxColumn + 2];
-            int[][] preSumColumns = new int[maxColumn + 2][maxRow + 2];
+            char[][] grid = new char[maxRow + 1][maxColumn + 1];
+            for (char[] row : grid) {
+                Arrays.fill(row, '.');
+            }
             for (int i = 0; i < points.size(); i++) {
                 Point2D pointA = points.get(i);
                 Point2D pointB = points.get((i + 1) % points.size());
                 if (pointA.getRow() == pointB.getRow()) {
-                    preSumRows[pointA.getRow()][Math.min(pointA.getColumn(), pointB.getColumn())]++;
-                    preSumRows[pointA.getRow()][Math.max(pointA.getColumn(), pointB.getColumn()) + 1]--;
-//                    preSumColumns[Math.min(pointA.getColumn(), pointB.getColumn())][pointA.getRow()]++;
-//                    preSumColumns[Math.max(pointA.getColumn(), pointB.getColumn()) + 1][pointA.getRow()]--;
+                    for (int column = Math.min(pointA.getColumn(), pointB.getColumn()); column <= Math.max(pointA.getColumn(), pointB.getColumn()); column++) {
+                        grid[pointA.getRow()][column] = '#';
+                    }
                 } else {
-//                    preSumRows[Math.min(pointA.getRow(), pointB.getRow())][pointA.getColumn()]++;
-//                    preSumRows[Math.max(pointA.getRow(), pointB.getRow()) + 1][pointA.getColumn()]--;
-                    preSumColumns[pointA.getColumn()][Math.min(pointA.getRow(), pointB.getRow())]++;
-                    preSumColumns[pointA.getColumn()][Math.min(pointA.getRow(), pointB.getRow()) + 1]--;
+                    for (int row = Math.min(pointA.getRow(), pointB.getRow()); row <= Math.max(pointA.getRow(), pointB.getRow()); row++) {
+                        grid[row][pointA.getColumn()] = '#';
+                    }
                 }
+            }
+            Point2D floodFillEntry = null;
+            for (int i = 0; i < points.size(); i++) {
+                Point2D prevPoint = points.get(i);
+                Point2D curPoint = points.get((i + 1) % points.size());
+                Point2D nextPoint = points.get((i + 2) % points.size());
+                if (prevPoint.getRow() == curPoint.getRow()) {
+                    if (curPoint.getRow() == nextPoint.getRow()) {
+                        continue;
+                    }
+                    // curPoint and nextPoint share a column
+                    int rowDelta;
+                    int columnDelta;
+                    if (prevPoint.getColumn() < curPoint.getColumn()) {
+                        columnDelta = -1;
+                    } else {
+                        columnDelta = 1;
+                    }
+                    if (curPoint.getRow() < nextPoint.getRow()) {
+                        rowDelta = 1;
+                    } else {
+                        rowDelta = -1;
+                    }
+                    floodFillEntry = new Point2D(curPoint.getRow() + rowDelta, curPoint.getColumn() + columnDelta);
+                    break;
+                }
+                // prevPoint and curPoint are on different rows
+                if (prevPoint.getColumn() == curPoint.getColumn()) {
+                    continue;
+                }
+                int rowDelta;
+                int columnDelta;
+                if (prevPoint.getRow() < curPoint.getRow()) {
+                    rowDelta = -1;
+                } else {
+                    rowDelta = 1;
+                }
+                if (curPoint.getColumn() < nextPoint.getColumn()) {
+                    columnDelta = 1;
+                } else {
+                    columnDelta = -1;
+                }
+                floodFillEntry = new Point2D(curPoint.getRow() + rowDelta, curPoint.getColumn() + columnDelta);
+                break;
             }
             if (debug) {
-                System.out.println("preSumRows: " + prettyPrint2dArray(preSumRows));
-                System.out.println("preSumColumns: " + prettyPrint2dArray(preSumColumns));
+                System.out.println("grid: " + prettyPrint2dArray(grid));
             }
+            char fillWith = '#';
+            floodFill(grid, floodFillEntry, fillWith);
             if (debug) {
-                StringBuilder sb = new StringBuilder();
-                for (int[] preSumRow : preSumRows) {
-                    int cur = 0;
-                    for (int j = 0; j < preSumRows[0].length; j++) {
-                        cur += preSumRow[j];
-                        sb.append(cur);
-                    }
-                    sb.append("\n");
-                }
-                System.out.println(sb);
-                System.out.println("\n");
-                sb = new StringBuilder();
-                for (int[] preSumColumn : preSumColumns) {
-                    int cur = 0;
-                    for (int j = 0; j < preSumColumns[0].length; j++) {
-                        cur += preSumColumn[j];
-                        sb.append(cur);
-                    }
-                    sb.append("\n");
-                }
-                System.out.println(sb);
+                System.out.println("grid: " + prettyPrint2dArray(grid));
             }
+
+            for (int i = 0; i < points.size(); i++) {
+                Point2D pointA = points.get(i);
+                for (int j = i + 1; j < points.size(); j++) {
+                    Point2D pointB = points.get(j);
+                    boolean canUseArea = true;
+                    outer:
+                    for (int r = Math.min(pointA.getRow(), pointB.getRow()); r <= Math.max(pointA.getRow(), pointB.getRow()); r++) {
+                        for (int c = Math.min(pointA.getColumn(), pointB.getColumn()); c <= Math.max(pointA.getColumn(), pointB.getColumn()); c++) {
+                            if (grid[r][c] != '#') {
+                                canUseArea = false;
+                                break outer;
+                            }
+                        }
+                    }
+                    if (!canUseArea) {
+                        continue;
+                    }
+                    long curArea = Point2D.areaBetweenCorners(pointA, pointB);
+                    if (curArea > maxArea) {
+                        maxArea = curArea;
+                        if (debug) {
+                            System.out.println("Max area: " + maxArea + " between points: " + pointA + " and " + pointB);
+                        }
+                    }
+                }
+            }
+
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
         return maxArea;
     }
 
-    private String prettyPrint2dArray(int[][] preSumColumns) {
+    private void floodFill(char[][] grid, Point2D point, char fillWith) {
+        Queue<Point2D> queue = new LinkedList<>();
+        queue.add(point);
+        while (!queue.isEmpty()) {
+            Point2D curPoint = queue.poll();
+            if (isOutOfBounds(grid, curPoint)) {
+                continue;
+            }
+            if (grid[curPoint.getRow()][curPoint.getColumn()] != '.') {
+                continue;
+            }
+            grid[curPoint.getRow()][curPoint.getColumn()] = fillWith;
+            int[][] directions = new int[][]{{-1, 0}, {0, -1}, {1, 0}, {0, 1}};
+            for (int[] direction : directions) {
+                Point2D newPoint = new Point2D(curPoint.getRow() + direction[0], curPoint.getColumn() + direction[1]);
+                if (isOutOfBounds(grid, newPoint)) {
+                    continue;
+                }
+                queue.add(newPoint);
+            }
+        }
+    }
+
+    private static boolean isOutOfBounds(char[][] grid, Point2D newPoint) {
+        return newPoint.getRow() < 0 || newPoint.getRow() >= grid.length || newPoint.getColumn() < 0 || newPoint.getColumn() >= grid[0].length;
+    }
+
+    private String prettyPrint2dArray(char[][] preSumColumns) {
         StringBuilder sb = new StringBuilder("\n");
-        for (int[] preSumColumn : preSumColumns) {
-            for (int i : preSumColumn) {
-                sb.append(String.format("%3d", i));
+        for (char[] preSumColumn : preSumColumns) {
+            for (char i : preSumColumn) {
+                sb.append(String.format("%3s", i));
             }
             sb.append("\n");
         }

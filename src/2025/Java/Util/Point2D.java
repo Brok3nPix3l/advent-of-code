@@ -32,6 +32,10 @@ public class Point2D {
         return Math.abs(raw);
     }
 
+    public static Point2D applyVector(Point2D point2D, int[] direction) {
+        return new Point2D(point2D.getRow() + direction[0], point2D.getColumn() + direction[1]);
+    }
+
     public int getRow() {
         return row;
     }
