@@ -16,8 +16,8 @@ public class Point2D {
     }
 
     public static Point2D fromArray(String[] coords) {
-        int row = Integer.parseInt(coords[0]);
-        int column = Integer.parseInt(coords[1]);
+        int column = Integer.parseInt(coords[0]);
+        int row = Integer.parseInt(coords[1]);
         return new Point2D(row, column);
     }
 
@@ -65,6 +65,6 @@ public class Point2D {
 
     @Override
     public String toString() {
-        return "Position{" + "row=" + row + ", column=" + column + '}';
+        return "Position{" + "column=" + column + ", row=" + row + '}';
     }
 }
