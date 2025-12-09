@@ -1,6 +1,6 @@
 package Days;
 
-import Util.Position3D;
+import Util.Point3D;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -27,14 +27,14 @@ public class Day8 implements DailyChallenge {
                 // if any other position(s) D and E point to either position A or B, they now point to the downstream position
                     // e.g. D -> A and A -> C, D -> C
 
-            List<Position3D> positions = new ArrayList<>();
+            List<Point3D> positions = new ArrayList<>();
             Map<Integer,Map<Integer, Double>> connections = new HashMap<>();
             PriorityQueue<List<Integer>> potentialConnections = new PriorityQueue<>(Comparator.comparingDouble(l -> connections.get(l.get(0)).get(l.get(1))));
             List<Integer> connectedTo = new ArrayList<>();
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 String[] tokens = line.split(",");
-                Position3D pos = Position3D.fromArray(tokens);
+                Point3D pos = Point3D.fromArray(tokens);
                 positions.add(pos);
                 for (int i = 0; i < positions.size() - 1; i++) {
                     connections.computeIfAbsent(i, a -> new HashMap<>()).put(positions.size() - 1, euclideanDistance(positions.get(i), pos));
@@ -94,7 +94,7 @@ public class Day8 implements DailyChallenge {
         return ans;
     }
 
-    private Map<Integer, Integer> determineCircuitSizes(List<Position3D> positions, List<Integer> connectedTo) {
+    private Map<Integer, Integer> determineCircuitSizes(List<Point3D> positions, List<Integer> connectedTo) {
         Map<Integer, Integer> circuitSizes = new HashMap<>();
         for (int i = 0; i < positions.size(); i++) {
             int local = i;
@@ -108,21 +108,21 @@ public class Day8 implements DailyChallenge {
         return circuitSizes;
     }
 
-    private double euclideanDistance(Position3D a, Position3D b) {
+    private double euclideanDistance(Point3D a, Point3D b) {
         return Math.abs(Math.sqrt(Math.pow(a.x() - b.x(), 2) + Math.pow(a.y() - b.y(), 2) + Math.pow(a.z() - b.z(), 2)));
     }
 
     public long Part2(boolean debug) {
         long ans;
         try (Scanner scanner = new Scanner(this.inputFile)) {
-            List<Position3D> positions = new ArrayList<>();
+            List<Point3D> positions = new ArrayList<>();
             Map<Integer,Map<Integer, Double>> connections = new HashMap<>();
             PriorityQueue<List<Integer>> potentialConnections = new PriorityQueue<>(Comparator.comparingDouble(l -> connections.get(l.get(0)).get(l.get(1))));
             List<Integer> connectedTo = new ArrayList<>();
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 String[] tokens = line.split(",");
-                Position3D pos = Position3D.fromArray(tokens);
+                Point3D pos = Point3D.fromArray(tokens);
                 positions.add(pos);
                 for (int i = 0; i < positions.size() - 1; i++) {
                     connections.computeIfAbsent(i, a -> new HashMap<>()).put(positions.size() - 1, euclideanDistance(positions.get(i), pos));

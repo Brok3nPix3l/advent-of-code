@@ -2,17 +2,34 @@ package Util;
 
 import java.util.Objects;
 
-public class Position2D {
+public class Point2D {
     private int row;
     private int column;
 
-    public Position2D(int row, int column) {
+    public Point2D(int row, int column) {
         this.row = row;
         this.column = column;
     }
 
-    public static Position2D fromArray(int[] startingPosition) {
-        return new Position2D(startingPosition[0], startingPosition[1]);
+    public static Point2D fromArray(int[] coords) {
+        return new Point2D(coords[0], coords[1]);
+    }
+
+    public static Point2D fromArray(String[] coords) {
+        int row = Integer.parseInt(coords[0]);
+        int column = Integer.parseInt(coords[1]);
+        return new Point2D(row, column);
+    }
+
+    /**
+     * Computes the area between two points, treating them as opposite corners
+     * @param pointA
+     * @param pointB
+     * @return
+     */
+    public static long areaBetweenCorners(Point2D pointA, Point2D pointB) {
+        long raw = (long) (pointA.getRow() - pointB.getRow() + 1) * (pointA.getColumn() - pointB.getColumn() + 1);
+        return Math.abs(raw);
     }
 
     public int getRow() {
@@ -37,7 +54,7 @@ public class Position2D {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        Position2D position = (Position2D) o;
+        Point2D position = (Point2D) o;
         return row == position.row && column == position.column;
     }
 
