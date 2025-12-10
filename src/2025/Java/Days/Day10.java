@@ -41,15 +41,8 @@ public class Day10 implements DailyChallenge {
             if (debug) {
                 System.out.println("Machines: " + machines);
             }
-            // dfs recursively pressing each combination of buttons until target state is achieved
-            // how to handle pressing the same button over and over and just infinitely toggling the state in a loop?
-            // record each state observed, and if we repeat then terminate that traversal
             for (int i = 0; i < machines.size(); i++) {
                 Machine machine = machines.get(i);
-                if (debug) {
-                    System.out.println("Machine " + i + "/" + machines.size() + " target light indicator state: " + machine.getTargetIndicatorLightState() + " buttons: " + machine.getButtons());
-                }
-
                 long minPressesRequired = minButtonPressesToGetToTargetState(machine, debug);
                 ans += minPressesRequired;
                 if (debug) {
@@ -62,45 +55,77 @@ public class Day10 implements DailyChallenge {
         return ans;
     }
 
+    // determine the number of buttons
+    // (2^# of buttons) - 1 is the total number of ways to press buttons
+    // iterate over all of them and, if the XOR product equals the target, count the number of set bits
+    // return the min number of set bits required
     private long minButtonPressesToGetToTargetState(Machine machine, boolean debug) {
         int targetIndicatorLightStateHash = machine.getTargetIndicatorLightState();
-        List<Integer> buttons = machine.getButtons();
-        // boolean array of current light config
-        // number of buttons pressed
-        Queue<Machine> machineQueue = new LinkedList<>();
-        machineQueue.add(machine);
-        long minPressesRequired = Long.MAX_VALUE;
-        Map<Integer,Long> minPressesFromState = new HashMap<>();
-        minPressesFromState.put(targetIndicatorLightStateHash, 0L);
-        while (!machineQueue.isEmpty()) {
-            Machine currentMachine = machineQueue.poll();
-            if (currentMachine.getButtonsPressed() > minPressesRequired) {
-                continue;
-            }
-            if (currentMachine.getCurrentIndicatorLightState() == targetIndicatorLightStateHash) {
-                minPressesRequired = Math.min(currentMachine.getButtonsPressed(), minPressesRequired);
-                continue;
-            }
-            if (currentMachine.getSeen().contains(currentMachine.getCurrentIndicatorLightState())) {
-                continue;
-            }
-            currentMachine.getSeen().add(currentMachine.getCurrentIndicatorLightState());
-            for (int i = 0; i < buttons.size(); i++) {
-                Machine newMachine = new Machine(currentMachine);
-                newMachine.pressButton(i);
-                if (minPressesFromState.containsKey(newMachine.getCurrentIndicatorLightState())) {
-                    minPressesFromState.put(currentMachine.getCurrentIndicatorLightState(), Math.min(minPressesFromState.get(newMachine.getCurrentIndicatorLightState()) + 1L, minPressesFromState.getOrDefault(currentMachine.getCurrentIndicatorLightState(), Long.MAX_VALUE)));
-                    minPressesRequired = Math.min(newMachine.getButtonsPressed() + minPressesFromState.get(newMachine.getCurrentIndicatorLightState()), minPressesRequired);
+        int maxButtonConfiguration = (int) Math.pow(2, machine.getButtons().size());
+        if (debug) {
+            System.out.println("maxButtonConfiguration: " + maxButtonConfiguration);
+        }
+        int minButtonPressesRequired = Integer.MAX_VALUE;
+        int binaryStringWidth = (int)(Math.log(maxButtonConfiguration) / Math.log(2));
+        for (int i = 0; i < maxButtonConfiguration; i++) {
+            // each bit corresponds to a coefficient in front of a button
+            // if a button is "active", XOR the product
+            int xorProduct = 0;
+            String binaryString = String.format("%" + binaryStringWidth + "s", Integer.toBinaryString(i)).replace(' ', '0');
+            int setBitCount = 0;
+            for (int j = 0; j < binaryString.length(); j++) {
+                char c = binaryString.charAt(j);
+                if (c == '0') {
                     continue;
                 }
-                machineQueue.add(newMachine);
+                xorProduct ^= machine.getButtons().get(machine.getButtons().size() - 1 - j);
+                setBitCount++;
+            }
+            if (debug) {
+                System.out.println("binaryString: " + binaryString + " xorProduct: " + xorProduct);
+            }
+            if (xorProduct == targetIndicatorLightStateHash) {
+                minButtonPressesRequired = Math.min(setBitCount, minButtonPressesRequired);
             }
         }
-        if (debug) {
-            System.out.println("minPressesFromState: " + minPressesFromState);
-        }
-        minPressesFromState.put(machine.getCurrentIndicatorLightState(), minPressesRequired);
-        return minPressesRequired;
+        return minButtonPressesRequired;
+//        List<Integer> buttons = machine.getButtons();
+//        // boolean array of current light config
+//        // number of buttons pressed
+//        Queue<Machine> machineQueue = new LinkedList<>();
+//        machineQueue.add(machine);
+//        long minPressesRequired = Long.MAX_VALUE;
+//        Map<Integer,Long> minPressesFromState = new HashMap<>();
+//        minPressesFromState.put(targetIndicatorLightStateHash, 0L);
+//        while (!machineQueue.isEmpty()) {
+//            Machine currentMachine = machineQueue.poll();
+//            if (currentMachine.getButtonsPressed() > minPressesRequired) {
+//                continue;
+//            }
+//            if (currentMachine.getCurrentIndicatorLightState() == targetIndicatorLightStateHash) {
+//                minPressesRequired = Math.min(currentMachine.getButtonsPressed(), minPressesRequired);
+//                continue;
+//            }
+//            if (currentMachine.getSeen().contains(currentMachine.getCurrentIndicatorLightState())) {
+//                continue;
+//            }
+//            currentMachine.getSeen().add(currentMachine.getCurrentIndicatorLightState());
+//            for (int i = 0; i < buttons.size(); i++) {
+//                Machine newMachine = new Machine(currentMachine);
+//                newMachine.pressButton(i);
+//                if (minPressesFromState.containsKey(newMachine.getCurrentIndicatorLightState())) {
+//                    minPressesFromState.put(currentMachine.getCurrentIndicatorLightState(), Math.min(minPressesFromState.get(newMachine.getCurrentIndicatorLightState()) + 1L, minPressesFromState.getOrDefault(currentMachine.getCurrentIndicatorLightState(), Long.MAX_VALUE)));
+//                    minPressesRequired = Math.min(newMachine.getButtonsPressed() + minPressesFromState.get(newMachine.getCurrentIndicatorLightState()), minPressesRequired);
+//                    continue;
+//                }
+//                machineQueue.add(newMachine);
+//            }
+//        }
+//        if (debug) {
+//            System.out.println("minPressesFromState: " + minPressesFromState);
+//        }
+//        minPressesFromState.put(machine.getCurrentIndicatorLightState(), minPressesRequired);
+//        return minPressesRequired;
     }
 
     public long Part2(boolean debug) {
