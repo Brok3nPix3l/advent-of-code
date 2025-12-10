@@ -11,7 +11,6 @@ import static Util.Misc.hashCodeForBooleanArray;
 
 public class Day10 implements DailyChallenge {
     File inputFile;
-    private static final char INACTIVE_LIGHT_INDICATOR = '.';
     private static final char ACTIVE_LIGHT_INDICATOR = '#';
 
     public Day10(File inputFile) throws FileNotFoundException {
@@ -89,43 +88,6 @@ public class Day10 implements DailyChallenge {
             }
         }
         return minButtonPressesRequired;
-//        List<Integer> buttons = machine.getButtons();
-//        // boolean array of current light config
-//        // number of buttons pressed
-//        Queue<Machine> machineQueue = new LinkedList<>();
-//        machineQueue.add(machine);
-//        long minPressesRequired = Long.MAX_VALUE;
-//        Map<Integer,Long> minPressesFromState = new HashMap<>();
-//        minPressesFromState.put(targetIndicatorLightStateHash, 0L);
-//        while (!machineQueue.isEmpty()) {
-//            Machine currentMachine = machineQueue.poll();
-//            if (currentMachine.getButtonsPressed() > minPressesRequired) {
-//                continue;
-//            }
-//            if (currentMachine.getCurrentIndicatorLightState() == targetIndicatorLightStateHash) {
-//                minPressesRequired = Math.min(currentMachine.getButtonsPressed(), minPressesRequired);
-//                continue;
-//            }
-//            if (currentMachine.getSeen().contains(currentMachine.getCurrentIndicatorLightState())) {
-//                continue;
-//            }
-//            currentMachine.getSeen().add(currentMachine.getCurrentIndicatorLightState());
-//            for (int i = 0; i < buttons.size(); i++) {
-//                Machine newMachine = new Machine(currentMachine);
-//                newMachine.pressButton(i);
-//                if (minPressesFromState.containsKey(newMachine.getCurrentIndicatorLightState())) {
-//                    minPressesFromState.put(currentMachine.getCurrentIndicatorLightState(), Math.min(minPressesFromState.get(newMachine.getCurrentIndicatorLightState()) + 1L, minPressesFromState.getOrDefault(currentMachine.getCurrentIndicatorLightState(), Long.MAX_VALUE)));
-//                    minPressesRequired = Math.min(newMachine.getButtonsPressed() + minPressesFromState.get(newMachine.getCurrentIndicatorLightState()), minPressesRequired);
-//                    continue;
-//                }
-//                machineQueue.add(newMachine);
-//            }
-//        }
-//        if (debug) {
-//            System.out.println("minPressesFromState: " + minPressesFromState);
-//        }
-//        minPressesFromState.put(machine.getCurrentIndicatorLightState(), minPressesRequired);
-//        return minPressesRequired;
     }
 
     public long Part2(boolean debug) {
