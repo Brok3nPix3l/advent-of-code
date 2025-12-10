@@ -1,70 +1,96 @@
 package Util;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import static Util.Misc.hashCodeForBooleanArray;
 
 public class Machine {
-    private boolean[] targetIndicatorLightState;
-    private boolean[] currentIndicatorLightState;
-    List<List<Integer>> buttons;
+    private int targetIndicatorLightState;
+    private int currentIndicatorLightState;
+    private List<Integer> buttons;
+    private long buttonsPressed;
+    private Set<Integer> seen;
 
     public Machine(boolean[] targetIndicatorLightState, boolean[] currentIndicatorLightState, List<List<Integer>> buttons) {
-        this.targetIndicatorLightState = targetIndicatorLightState;
-        this.currentIndicatorLightState = currentIndicatorLightState;
-        this.buttons = buttons;
+        int binaryNumberLength = targetIndicatorLightState.length;
+        this.targetIndicatorLightState = hashCodeForBooleanArray(targetIndicatorLightState);
+        this.currentIndicatorLightState = hashCodeForBooleanArray(currentIndicatorLightState);
+        this.buttons = new ArrayList<>();
+        for (List<Integer> button : buttons) {
+            int buttonValue = 0;
+            for (Integer integer : button) {
+                buttonValue += (int) Math.pow(2, (binaryNumberLength - 1) - integer);
+            }
+            this.buttons.add(buttonValue);
+        }
+        this.buttonsPressed = 0L;
+        this.seen = new HashSet<>();
     }
 
     public Machine(Machine machine) {
-        boolean[] newTargetIndicatorLightState = new boolean[machine.targetIndicatorLightState.length];
-        for (int i = 0; i < machine.targetIndicatorLightState.length; i++) {
-            newTargetIndicatorLightState[i] = machine.targetIndicatorLightState[i];
-        }
-        this.targetIndicatorLightState = newTargetIndicatorLightState;
-        boolean[] newCurrentIndicatorLightState = new boolean[machine.currentIndicatorLightState.length];
-        for (int i = 0; i < machine.currentIndicatorLightState.length; i++) {
-            newCurrentIndicatorLightState[i] = machine.currentIndicatorLightState[i];
-        }
-        this.currentIndicatorLightState = newCurrentIndicatorLightState;
-        this.buttons = new ArrayList<>(machine.getButtons());
+        this.targetIndicatorLightState = machine.targetIndicatorLightState;
+        this.currentIndicatorLightState = machine.currentIndicatorLightState;
+        this.buttons = new ArrayList<>(machine.buttons);
+        this.buttonsPressed = machine.buttonsPressed;
+        this.seen = new HashSet<>(machine.seen);
     }
 
-    public boolean[] getTargetIndicatorLightState() {
+    public int getTargetIndicatorLightState() {
         return targetIndicatorLightState;
     }
 
-    public void setTargetIndicatorLightState(boolean[] targetIndicatorLightState) {
+    public void setTargetIndicatorLightState(int targetIndicatorLightState) {
         this.targetIndicatorLightState = targetIndicatorLightState;
     }
 
-    public boolean[] getCurrentIndicatorLightState() {
+    public int getCurrentIndicatorLightState() {
         return currentIndicatorLightState;
     }
 
-    public void setCurrentIndicatorLightState(boolean[] currentIndicatorLightState) {
+    public void setCurrentIndicatorLightState(int currentIndicatorLightState) {
         this.currentIndicatorLightState = currentIndicatorLightState;
     }
 
-    public List<List<Integer>> getButtons() {
+    public List<Integer> getButtons() {
         return buttons;
     }
 
-    public void setButtons(List<List<Integer>> buttons) {
+    public void setButtons(List<Integer> buttons) {
         this.buttons = buttons;
+    }
+
+    public long getButtonsPressed() {
+        return buttonsPressed;
+    }
+
+    public void setButtonsPressed(long buttonsPressed) {
+        this.buttonsPressed = buttonsPressed;
+    }
+
+    public Set<Integer> getSeen() {
+        return seen;
+    }
+
+    public void setSeen(Set<Integer> seen) {
+        this.seen = seen;
     }
 
     @Override
     public String toString() {
         return "Machine{" +
-                "targetIndicatorLightState=" + Arrays.toString(targetIndicatorLightState) +
-                ", currentIndicatorLightState=" + Arrays.toString(currentIndicatorLightState) +
+                "targetIndicatorLightState=" + targetIndicatorLightState +
+                ", currentIndicatorLightState=" + currentIndicatorLightState +
                 ", buttons=" + buttons +
+                ", buttonsPressed=" + buttonsPressed +
+                ", seen=" + seen +
                 '}';
     }
 
     public void pressButton(int buttonIndex) {
-        for (int i : this.buttons.get(buttonIndex)) {
-            this.currentIndicatorLightState[i] = !this.currentIndicatorLightState[i];
-        }
+        currentIndicatorLightState ^= this.buttons.get(buttonIndex);
+        this.buttonsPressed++;
     }
 }

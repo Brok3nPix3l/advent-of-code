@@ -7,6 +7,8 @@ import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static Util.Misc.hashCodeForBooleanArray;
+
 public class Day10 implements DailyChallenge {
     File inputFile;
     private static final char INACTIVE_LIGHT_INDICATOR = '.';
@@ -42,15 +44,13 @@ public class Day10 implements DailyChallenge {
             // dfs recursively pressing each combination of buttons until target state is achieved
             // how to handle pressing the same button over and over and just infinitely toggling the state in a loop?
             // record each state observed, and if we repeat then terminate that traversal
-            for (Machine machine : machines) {
+            for (int i = 0; i < machines.size(); i++) {
+                Machine machine = machines.get(i);
                 if (debug) {
-                    System.out.println("Target light indicator state: " + Arrays.toString(machine.getTargetIndicatorLightState()));
+                    System.out.println("Machine " + i + "/" + machines.size() + " target light indicator state: " + machine.getTargetIndicatorLightState() + " buttons: " + machine.getButtons());
                 }
-                Map<Integer,Long> minPressesFromState = new HashMap<>();
-                long minPressesRequired = minButtonPressesToGetToTargetState(machine, minPressesFromState, debug);
-                if (debug) {
-                    System.out.println("Min presses from state: " + minPressesFromState);
-                }
+
+                long minPressesRequired = minButtonPressesToGetToTargetState(machine, debug);
                 ans += minPressesRequired;
                 if (debug) {
                     System.out.println("Min presses required for machine " + machine + ": " + minPressesRequired);
@@ -62,69 +62,45 @@ public class Day10 implements DailyChallenge {
         return ans;
     }
 
-    private long minButtonPressesToGetToTargetState(Machine machine, Map<Integer,Long> minPressesFromState, boolean debug) {
-        if (Arrays.equals(machine.getCurrentIndicatorLightState(), machine.getTargetIndicatorLightState())) {
-            return 0;
-        }
-        if (minPressesFromState.containsKey(hashCodeForBooleanArray(machine.getCurrentIndicatorLightState()))) {
-            if (minPressesFromState.get(hashCodeForBooleanArray(machine.getCurrentIndicatorLightState())) == -1L) {
-                return Long.MAX_VALUE;
+    private long minButtonPressesToGetToTargetState(Machine machine, boolean debug) {
+        int targetIndicatorLightStateHash = machine.getTargetIndicatorLightState();
+        List<Integer> buttons = machine.getButtons();
+        // boolean array of current light config
+        // number of buttons pressed
+        Queue<Machine> machineQueue = new LinkedList<>();
+        machineQueue.add(machine);
+        long minPressesRequired = Long.MAX_VALUE;
+        Map<Integer,Long> minPressesFromState = new HashMap<>();
+        minPressesFromState.put(targetIndicatorLightStateHash, 0L);
+        while (!machineQueue.isEmpty()) {
+            Machine currentMachine = machineQueue.poll();
+            if (currentMachine.getButtonsPressed() > minPressesRequired) {
+                continue;
             }
-            return minPressesFromState.get(hashCodeForBooleanArray(machine.getCurrentIndicatorLightState()));
-        }
-        minPressesFromState.put(hashCodeForBooleanArray(machine.getCurrentIndicatorLightState()), -1L);
-        // determine which lights are in the wrong state
-        // try pressing all buttons with at least one of those lights on it
-//        boolean[] lightsToChange = new boolean[machine.getTargetIndicatorLightState().length];
-//        for (int i = 0; i < machine.getTargetIndicatorLightState().length; i++) {
-//            if (machine.getTargetIndicatorLightState()[i] != machine.getCurrentIndicatorLightState()[i]) {
-//                lightsToChange[i] = true;
-//            }
-//        }
-//        Set<Integer> buttonsToPress = new HashSet<>();
-//        for (int i = 0; i < lightsToChange.length; i++) {
-//            if (!lightsToChange[i]) {
-//                continue;
-//            }
-//            for (int j = 0; j < machine.getButtons().size(); j++) {
-//                if (machine.getButtons().get(j).contains(i)) {
-//                    buttonsToPress.add(j);
-//                }
-//            }
-//        }
-//        if (debug) {
-//            System.out.println("Current light indicator state: " + Arrays.toString(machine.getCurrentIndicatorLightState()));
-//            System.out.println("Buttons to press: " + buttonsToPress);
-//        }
-//        for (int i : buttonsToPress) {
-        long minButtonPressesRequired = Long.MAX_VALUE;
-        for (int i = 0; i < machine.getButtons().size(); i++) {
-            Machine newMachine = new Machine(machine);
-            newMachine.pressButton(i);
-            int newStateHash = hashCodeForBooleanArray(newMachine.getCurrentIndicatorLightState());
-            // if minPressesFromState.get(newStateHash) == -1, that means another call stack is currently trying to solve this same problem
-            // terminate and let the other one solve it
-            if (minPressesFromState.containsKey(newStateHash)) {
-                if (minPressesFromState.get(newStateHash) == -1L) {
+            if (currentMachine.getCurrentIndicatorLightState() == targetIndicatorLightStateHash) {
+                minPressesRequired = Math.min(currentMachine.getButtonsPressed(), minPressesRequired);
+                continue;
+            }
+            if (currentMachine.getSeen().contains(currentMachine.getCurrentIndicatorLightState())) {
+                continue;
+            }
+            currentMachine.getSeen().add(currentMachine.getCurrentIndicatorLightState());
+            for (int i = 0; i < buttons.size(); i++) {
+                Machine newMachine = new Machine(currentMachine);
+                newMachine.pressButton(i);
+                if (minPressesFromState.containsKey(newMachine.getCurrentIndicatorLightState())) {
+                    minPressesFromState.put(currentMachine.getCurrentIndicatorLightState(), Math.min(minPressesFromState.get(newMachine.getCurrentIndicatorLightState()) + 1L, minPressesFromState.getOrDefault(currentMachine.getCurrentIndicatorLightState(), Long.MAX_VALUE)));
+                    minPressesRequired = Math.min(newMachine.getButtonsPressed() + minPressesFromState.get(newMachine.getCurrentIndicatorLightState()), minPressesRequired);
                     continue;
                 }
-                minButtonPressesRequired = Math.min(minPressesFromState.get(newStateHash) + 1, minButtonPressesRequired);
-            }
-            long pressesRequired = minButtonPressesToGetToTargetState(newMachine, minPressesFromState, debug);
-            minPressesFromState.put(newStateHash, pressesRequired);
-            minButtonPressesRequired = Math.min(pressesRequired, minButtonPressesRequired);
-        }
-        return minButtonPressesRequired + 1;
-    }
-
-    private Integer hashCodeForBooleanArray(boolean[] array) {
-        int hash = 0;
-        for (int i = 0; i < array.length; i++) {
-            if (array[i]) {
-                hash |= (1 << i);
+                machineQueue.add(newMachine);
             }
         }
-        return hash;
+        if (debug) {
+            System.out.println("minPressesFromState: " + minPressesFromState);
+        }
+        minPressesFromState.put(machine.getCurrentIndicatorLightState(), minPressesRequired);
+        return minPressesRequired;
     }
 
     public long Part2(boolean debug) {
