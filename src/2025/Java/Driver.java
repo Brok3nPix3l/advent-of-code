@@ -13,6 +13,7 @@ public class Driver {
         String fileSuffix = "";
         int part;
         boolean debug = false;
+        boolean profile = false;
         Properties properties = parseArgs(args);
         if (properties.containsKey("dayNumber")) {
             dayNumber = properties.getProperty("dayNumber");
@@ -33,6 +34,9 @@ public class Driver {
         if (properties.containsKey("debug")) {
             debug = Boolean.parseBoolean(properties.getProperty("debug"));
         }
+        if (properties.containsKey("profile")) {
+            profile = Boolean.parseBoolean(properties.getProperty("profile"));
+        }
 
         DailyChallenge dailyChallenge;
         try {
@@ -47,15 +51,28 @@ public class Driver {
             throw new RuntimeException(e);
         }
         try {
-            if (debug) {
-                Method partMethod = dailyChallenge.getClass().getMethod("Part" + part, boolean.class);
-                System.out.println(partMethod.invoke(dailyChallenge, debug));
+            if (profile) {
+                long startTime = System.nanoTime();
+                runMethod(debug, dailyChallenge, part);
+                    long endTime = System.nanoTime();
+                    long duration = (endTime - startTime) / 1_000_000;
+                    System.out.println("Execution time: " + duration + "ms");
             } else {
-                Method partMethod = dailyChallenge.getClass().getMethod("Part" + part);
-                System.out.println(partMethod.invoke(dailyChallenge));
+                runMethod(debug, dailyChallenge, part);
             }
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private static void runMethod(boolean debug, DailyChallenge dailyChallenge, int part)
+            throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        if (debug) {
+            Method partMethod = dailyChallenge.getClass().getMethod("Part" + part, boolean.class);
+            System.out.println(partMethod.invoke(dailyChallenge, debug));
+        } else {
+            Method partMethod = dailyChallenge.getClass().getMethod("Part" + part);
+            System.out.println(partMethod.invoke(dailyChallenge));
         }
     }
 
