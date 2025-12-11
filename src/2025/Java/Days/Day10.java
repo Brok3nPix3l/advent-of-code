@@ -7,9 +7,11 @@ import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.microsoft.z3.*;
+
 public class Day10 implements DailyChallenge {
-    File inputFile;
     private static final char ACTIVE_LIGHT_INDICATOR = '#';
+    File inputFile;
 
     public Day10(File inputFile) throws FileNotFoundException {
         new Scanner(inputFile);
@@ -30,9 +32,11 @@ public class Day10 implements DailyChallenge {
                 }
                 List<List<Integer>> buttons = new ArrayList<>();
                 for (int i = 1; i < parts.length - 1; i++) {
-                    buttons.add(Arrays.stream(parts[i].replaceAll("[()]", "").split(",")).map(Integer::parseInt).collect(Collectors.toList()));
+                    buttons.add(Arrays.stream(parts[i].replaceAll("[()]", "").split(",")).map(Integer::parseInt)
+                            .collect(Collectors.toList()));
                 }
-                Machine machine = new Machine(targetLightIndicatorState, currentLightIndicatorState, buttons, new HashMap<>(), new HashMap<>());
+                Machine machine = new Machine(targetLightIndicatorState, currentLightIndicatorState, buttons,
+                        new HashMap<>(), new HashMap<>());
                 machines.add(machine);
             }
             if (debug) {
@@ -43,7 +47,8 @@ public class Day10 implements DailyChallenge {
 //                long minPressesRequired = minButtonPressesToGetToTargetState(machine, debug);
 //                ans += minPressesRequired;
                 if (debug) {
-//                    System.out.println("Min presses required for machine " + machine + ": " + minPressesRequired);
+//                    System.out.println("Min presses required for machine " + machine + ": " +
+//                    minPressesRequired);
                 }
             }
         } catch (FileNotFoundException e) {
@@ -68,7 +73,8 @@ public class Day10 implements DailyChallenge {
 //            // each bit corresponds to a coefficient in front of a button
 //            // if a button is "active", XOR the product
 //            int xorProduct = 0;
-//            String binaryString = String.format("%" + binaryStringWidth + "s", Integer.toBinaryString(i)).replace(' ', '0');
+//            String binaryString = String.format("%" + binaryStringWidth + "s", Integer.toBinaryString(i))
+//            .replace(' ', '0');
 //            int setBitCount = 0;
 //            for (int j = 0; j < binaryString.length(); j++) {
 //                char c = binaryString.charAt(j);
@@ -102,27 +108,72 @@ public class Day10 implements DailyChallenge {
                 }
                 List<List<Integer>> buttons = new ArrayList<>();
                 for (int i = 1; i < parts.length - 1; i++) {
-                    buttons.add(Arrays.stream(parts[i].replaceAll("[()]", "").split(",")).map(Integer::parseInt).collect(Collectors.toList()));
+                    buttons.add(Arrays.stream(parts[i].replaceAll("[()]", "").split(",")).map(Integer::parseInt)
+                            .collect(Collectors.toList()));
                 }
                 String joltageCountersRaw = parts[parts.length - 1];
                 String joltageCountersStripped = joltageCountersRaw.replaceAll("[{}]", "");
-                Map<Integer,Integer> targetJoltageCounterValueMap = new HashMap<>();
-                Map<Integer,Integer> currentJoltageCounterValueMap = new HashMap<>();
-                List<Integer> joltageCounterValues = Arrays.stream(joltageCountersStripped.split(",")).map(Integer::valueOf).toList();
+                Map<Integer, Integer> targetJoltageCounterValueMap = new HashMap<>();
+                Map<Integer, Integer> currentJoltageCounterValueMap = new HashMap<>();
+                List<Integer> joltageCounterValues =
+                        Arrays.stream(joltageCountersStripped.split(",")).map(Integer::valueOf).toList();
                 for (int i = 0; i < joltageCounterValues.size(); i++) {
                     targetJoltageCounterValueMap.put(i, joltageCounterValues.get(i));
                 }
-                Machine machine = new Machine(targetLightIndicatorState, currentLightIndicatorState, buttons, targetJoltageCounterValueMap, currentJoltageCounterValueMap);
+                Machine machine = new Machine(targetLightIndicatorState, currentLightIndicatorState, buttons,
+                        targetJoltageCounterValueMap, currentJoltageCounterValueMap);
                 machines.add(machine);
             }
             if (debug) {
                 System.out.println("Machines: " + machines);
             }
             for (Machine machine : machines) {
-                long minPressesRequired = minButtonPressesToSetAllJoltageCountersToTargetValues(machine, debug);
-                ans += minPressesRequired;
-                if (debug) {
-                    System.out.println("Min presses required for machine " + machine + ": " + minPressesRequired);
+                try (Context context = new Context()) {
+                    List<IntExpr> buttonExpressions = new ArrayList<>();
+                    for (List<Integer> button : machine.getButtons()) {
+                        buttonExpressions.add(context.mkIntConst(
+                                button.stream().map(String::valueOf).collect(Collectors.joining(", "))));
+                    }
+                    Optimize optimize = context.mkOptimize();
+                    // all buttons must be pressed 0 or more times
+                    for (int i = 0; i < buttonExpressions.size(); i++) {
+                        optimize.Add(context.mkGe(buttonExpressions.get(i), context.mkInt(0)));
+                    }
+                    // (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
+                    // x + y + .. + w = 7
+                    for (int i = 0; i < machine.getTargetJoltageCounters().size(); i++) {
+                        List<IntExpr> currentJoltageCounterEquation = new ArrayList<>();
+                        for (int j = 0; j < machine.getButtons().size(); j++) {
+                            List<Integer> button = machine.getButtons().get(j);
+                            if (button.contains(i)) {
+                                currentJoltageCounterEquation.add(buttonExpressions.get(j));
+                            }
+                        }
+                        optimize.Add(context.mkEq(context.mkAdd(currentJoltageCounterEquation.toArray(new IntExpr[0])), context.mkInt(machine.getTargetJoltageCounters().get(i))));
+                    }
+                    // ..
+                    // goal is minimize x + y + z + ...
+                    Optimize.Handle<IntSort> goal =
+                            optimize.MkMinimize(context.mkAdd(buttonExpressions.toArray(new IntExpr[0])));
+                    if (optimize.Check() != Status.SATISFIABLE) {
+                        throw new RuntimeException("equation is unsatisfiable");
+                    }
+                    Expr<IntSort> valueExpression = goal.getValue();
+                    if (!valueExpression.isNumeral()) {
+                        throw new RuntimeException("value expression is not numeral");
+                    }
+                    IntNum intNum = (IntNum) valueExpression;
+                    ans += intNum.getInt64();
+                    if (debug) {
+                        Model model = optimize.getModel();
+                        for (IntExpr button : buttonExpressions) {
+                            System.out.println(button.toString() + " = " + model.eval(button, false));
+                        }
+                    }
+                    if (debug) {
+                        System.out.println(
+                                "Min presses required for machine " + machine + ": " + goal.getValue());
+                    }
                 }
             }
         } catch (FileNotFoundException e) {
@@ -140,8 +191,8 @@ public class Day10 implements DailyChallenge {
     // if all joltage counters match the target, sum the map values
     // return smallest sum of map values
     private long minButtonPressesToSetAllJoltageCountersToTargetValues(Machine machine, boolean debug) {
-        Map<Integer,Integer> targetJoltageCounters = machine.getTargetJoltageCounters();
-        Set<Map<Integer,Integer>> seen = new HashSet<>();
+        Map<Integer, Integer> targetJoltageCounters = machine.getTargetJoltageCounters();
+        Set<Map<Integer, Integer>> seen = new HashSet<>();
         Queue<Machine> queue = new LinkedList<>();
         queue.add(machine);
         long minButtonPresses = Long.MAX_VALUE;
@@ -164,7 +215,8 @@ public class Day10 implements DailyChallenge {
             }
             seen.add(currentMachine.getCurrentJoltageCounters());
             // button in binary represents which joltage counters it will increment when pressed
-            // can iterate through button as a string and increment the joltage counters where button.charAt(i) == '1'
+            // can iterate through button as a string and increment the joltage counters where button.charAt(i)
+            // == '1'
             for (int i = 0; i < currentMachine.getButtons().size(); i++) {
                 Machine newMachine = new Machine(currentMachine);
                 newMachine.pushButton(i);
