@@ -65,8 +65,13 @@ public class Day11 implements DailyChallenge {
             dacAndFftCountForDataPathsPassingThroughDevice.put("svr", new PassageCounts(1, 0, 0, 0));
             Queue<String> queue = new LinkedList<>();
             queue.add("svr");
+            Set<String> visited = new HashSet<>();
             while (!queue.isEmpty()) {
                 String currentDevice = queue.poll();
+                if (visited.contains(currentDevice)) {
+                    continue;
+                }
+                visited.add(currentDevice);
                 PassageCounts currentDevicePassageCounts = dacAndFftCountForDataPathsPassingThroughDevice.get(currentDevice);
                 if (currentDevice.equals("dac")) {
                     currentDevicePassageCounts.addToDacAndFftCount(currentDevicePassageCounts.getFftCount());
