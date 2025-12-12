@@ -243,4 +243,21 @@ public class Tree {
     private char[][] to2dCharArray(List<String> stringList) {
         return stringList.stream().map(String::toCharArray).toArray(char[][]::new);
     }
+
+    public boolean isFeasibleToPlacePresents(Map<Integer, List<String>> presents, boolean debug, int treeNumber) {
+        // determine how much space there is total under the tree
+        int spaceAvailable = this.grid.length * this.grid[0].length;
+        // determine how much space is required to place all the present with perfect packing
+        int spaceRequired = 0;
+        for (Map.Entry<Integer,Integer> requiredPresentEntry : this.requiredPresents.entrySet()) {
+            spaceRequired += new Present(requiredPresentEntry.getKey(), 0, false, to2dCharArray(presents.get(requiredPresentEntry.getKey())), 0, 0).getOccupiedCellCount() *
+                    requiredPresentEntry.getValue();
+        }
+        // if more space is needed to place all the presents than is present under the tree, return false
+        boolean feasible = spaceAvailable > spaceRequired;
+        if (debug && !feasible) {
+            System.out.println("it's not feasible to place all presents under tree " + treeNumber + " because there are " + spaceRequired + " spaces required and only " + spaceAvailable + " spaces available");
+        }
+        return feasible;
+    }
 }

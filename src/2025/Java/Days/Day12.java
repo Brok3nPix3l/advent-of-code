@@ -56,7 +56,11 @@ public class Day12 implements DailyChallenge {
                 System.out.println("trees: " + trees);
             }
             for (int i = 0; i < trees.size(); i++) {
-                if (trees.get(i).canPlaceAllPresents(presents, debug)) {
+                Tree tree = trees.get(i);
+                if (!tree.isFeasibleToPlacePresents(presents, debug, i)) {
+                    continue;
+                }
+                if (tree.canPlaceAllPresents(presents, debug)) {
                     if (debug) {
                         System.out.println("can place all presents under tree " + i);
                     }

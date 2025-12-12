@@ -7,12 +7,23 @@ public class Present {
     private char[][] grid;
     private int horizontalOffset;
     private int verticalOffset;
+    private int occupiedCellCount;
+    private int vacantCellCount;
 
     public Present(int presentNumber, int rotationCount, boolean flipped, char[][] grid, int horizontalOffset, int verticalOffset) {
         this.presentNumber = presentNumber;
         this.rotationCount = rotationCount;
         this.flipped = flipped;
         this.grid = grid;
+        for (char[] row : this.grid) {
+            for (char c : row) {
+                if (c == '.') {
+                    this.vacantCellCount++;
+                } else if (c == '#') {
+                    this.occupiedCellCount++;
+                }
+            }
+        }
         this.horizontalOffset = horizontalOffset;
         this.verticalOffset = verticalOffset;
     }
@@ -25,6 +36,22 @@ public class Present {
         this.grid = newPresent.grid;
         this.horizontalOffset = newPresent.horizontalOffset;
         this.verticalOffset = newPresent.verticalOffset;
+    }
+
+    public int getOccupiedCellCount() {
+        return occupiedCellCount;
+    }
+
+    public void setOccupiedCellCount(int occupiedCellCount) {
+        this.occupiedCellCount = occupiedCellCount;
+    }
+
+    public int getVacantCellCount() {
+        return vacantCellCount;
+    }
+
+    public void setVacantCellCount(int vacantCellCount) {
+        this.vacantCellCount = vacantCellCount;
     }
 
     public int getHorizontalOffset() {
