@@ -1,7 +1,6 @@
 package Days;
 
-import Util.PassageCounts;
-import Util.Path;
+import Util.DevicePathInfo;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -48,7 +47,7 @@ public class Day11 implements DailyChallenge {
     }
 
     public long Part2(boolean debug) {
-        long ans = 0L;
+        long ans;
         try (Scanner scanner = new Scanner(this.inputFile)) {
             Map<String, List<String>> cableMap = new HashMap<>();
             while (scanner.hasNextLine()) {
@@ -61,92 +60,77 @@ public class Day11 implements DailyChallenge {
             if (debug) {
                 System.out.println("cableMap: " + cableMap);
             }
-            Map<String, PassageCounts> dacAndFftCountForDataPathsPassingThroughDevice = new HashMap<>();
-            dacAndFftCountForDataPathsPassingThroughDevice.put("svr", new PassageCounts(1, 0, 0, 0));
-            Queue<String> queue = new LinkedList<>();
-            queue.add("svr");
-            Set<String> visited = new HashSet<>();
-            while (!queue.isEmpty()) {
-                String currentDevice = queue.poll();
-                if (visited.contains(currentDevice)) {
-                    continue;
-                }
-                visited.add(currentDevice);
-                PassageCounts currentDevicePassageCounts = dacAndFftCountForDataPathsPassingThroughDevice.get(currentDevice);
-                if (currentDevice.equals("dac")) {
-                    currentDevicePassageCounts.addToDacAndFftCount(currentDevicePassageCounts.getFftCount());
-                    currentDevicePassageCounts.setFftCount(0L);
-                    currentDevicePassageCounts.addToDacCount(currentDevicePassageCounts.getNeitherCount());
-                    currentDevicePassageCounts.setNeitherCount(0L);
-                } else if (currentDevice.equals("fft")) {
-                    currentDevicePassageCounts.addToDacAndFftCount(currentDevicePassageCounts.getDacCount());
-                    currentDevicePassageCounts.setDacCount(0L);
-                    currentDevicePassageCounts.addToFftCount(currentDevicePassageCounts.getNeitherCount());
-                    currentDevicePassageCounts.setNeitherCount(0L);
-                }
-                if (!cableMap.containsKey(currentDevice)) {
-                    continue;
-                }
-                for (String destinationDevice : cableMap.get(currentDevice)) {
-                    PassageCounts destinationDevicePassageCounts = dacAndFftCountForDataPathsPassingThroughDevice.computeIfAbsent(destinationDevice, a -> new PassageCounts());
-                    destinationDevicePassageCounts.addNeitherCount(currentDevicePassageCounts.getNeitherCount());
-                    destinationDevicePassageCounts.addToDacCount(currentDevicePassageCounts.getDacCount());
-                    destinationDevicePassageCounts.addToFftCount(currentDevicePassageCounts.getFftCount());
-                    destinationDevicePassageCounts.addToDacAndFftCount(currentDevicePassageCounts.getDacAndFftCount());
-                }
-                queue.addAll(cableMap.get(currentDevice));
-            }
-            if (debug) {
-                System.out.println("dacAndFftCountForDataPathsPassingThroughDevice: " + dacAndFftCountForDataPathsPassingThroughDevice);
-            }
-            ans = dacAndFftCountForDataPathsPassingThroughDevice.get("out").getDacAndFftCount();
+            ans = pathsFromDeviceThroughDacAndFftToOut("svr", new HashMap<>(), cableMap, debug, false, false);
+//            Map<String, DevicePathInfo> dacAndFftCountForDataPathsPassingThroughDevice = new HashMap<>();
+//            dacAndFftCountForDataPathsPassingThroughDevice.put("svr", new DevicePathInfo(1, 0, 0, 0));
+//            Queue<String> queue = new LinkedList<>();
+//            queue.add("svr");
+//            Set<String> visited = new HashSet<>();
+//            while (!queue.isEmpty()) {
+//                String currentDevice = queue.poll();
+//                if (visited.contains(currentDevice)) {
+//                    continue;
+//                }
+//                visited.add(currentDevice);
+//                DevicePathInfo currentDeviceDevicePathInfo = dacAndFftCountForDataPathsPassingThroughDevice.get(currentDevice);
+//                if (currentDevice.equals("dac")) {
+//                    currentDeviceDevicePathInfo.addToDacAndFftCount(currentDeviceDevicePathInfo.getFftCount());
+//                    currentDeviceDevicePathInfo.setFftCount(0L);
+//                    currentDeviceDevicePathInfo.addToDacCount(currentDeviceDevicePathInfo.getNeitherCount());
+//                    currentDeviceDevicePathInfo.setNeitherCount(0L);
+//                } else if (currentDevice.equals("fft")) {
+//                    currentDeviceDevicePathInfo.addToDacAndFftCount(currentDeviceDevicePathInfo.getDacCount());
+//                    currentDeviceDevicePathInfo.setDacCount(0L);
+//                    currentDeviceDevicePathInfo.addToFftCount(currentDeviceDevicePathInfo.getNeitherCount());
+//                    currentDeviceDevicePathInfo.setNeitherCount(0L);
+//                }
+//                if (!cableMap.containsKey(currentDevice)) {
+//                    continue;
+//                }
+//                for (String destinationDevice : cableMap.get(currentDevice)) {
+//                    DevicePathInfo destinationDeviceDevicePathInfo = dacAndFftCountForDataPathsPassingThroughDevice.computeIfAbsent(destinationDevice, a -> new DevicePathInfo());
+//                    destinationDeviceDevicePathInfo.addNeitherCount(currentDeviceDevicePathInfo.getNeitherCount());
+//                    destinationDeviceDevicePathInfo.addToDacCount(currentDeviceDevicePathInfo.getDacCount());
+//                    destinationDeviceDevicePathInfo.addToFftCount(currentDeviceDevicePathInfo.getFftCount());
+//                    destinationDeviceDevicePathInfo.addToDacAndFftCount(currentDeviceDevicePathInfo.getDacAndFftCount());
+//                }
+//                queue.addAll(cableMap.get(currentDevice));
+//            }
+//            if (debug) {
+//                System.out.println("dacAndFftCountForDataPathsPassingThroughDevice: " + dacAndFftCountForDataPathsPassingThroughDevice);
+//            }
+//            ans = dacAndFftCountForDataPathsPassingThroughDevice.get("out").getDacAndFftCount();
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
         return ans;
     }
 
-    private PassageCounts pathsFromDeviceThroughDacAndFftToOut(Path currentDataPath, Map<String, PassageCounts> memo, Map<String, List<String>> cableMap, boolean debug) {
-        if (memo.containsKey(currentDataPath.getCurrentDevice())) {
+    private long pathsFromDeviceThroughDacAndFftToOut(String currentDevice, Map<DevicePathInfo, Long> memo, Map<String, List<String>> cableMap, boolean debug,
+                                                      boolean visitedDac, boolean visitedFft) {
+        DevicePathInfo hashKey = new DevicePathInfo(currentDevice, visitedDac, visitedFft);
+        if (memo.containsKey(hashKey)) {
             if (debug) {
-                System.out.println("memo: '" + currentDataPath.getCurrentDevice() + ": " + memo.get(currentDataPath.getCurrentDevice()) + "'");
+                System.out.println("memo: '" + hashKey + " " + memo.get(hashKey) +"'");
             }
-            // if current contains dac,
-            if (currentDataPath.hasVisited(DAC)) {
-                memo.get(currentDataPath.getCurrentDevice()).setDacCount(memo.get(currentDataPath.getCurrentDevice()).getDacCount() + 1);
-            }
-            if (currentDataPath.hasVisited(FFT)) {
-                memo.get(currentDataPath.getCurrentDevice()).setFftCount(memo.get(currentDataPath.getCurrentDevice()).getFftCount() + 1);
-            }
-            return memo.get(currentDataPath.getCurrentDevice());
+            return memo.get(hashKey);
         }
-        if (currentDataPath.getCurrentDevice().equals("out")) {
-            if (debug) {
-                System.out.println("reached 'out' currentDataPath: " + currentDataPath);
-            }
-            if (currentDataPath.hasVisited(DAC) && currentDataPath.hasVisited(FFT)) {
-                return new PassageCounts(0, 0, 0, 1);
-            }
-            if (currentDataPath.hasVisited(DAC)) {
-                return new PassageCounts(0, 1, 0, 0);
-            }
-            if (currentDataPath.hasVisited(FFT)) {
-                return new PassageCounts(0, 0, 1, 0);
-            }
-            return new PassageCounts(1, 0, 0, 0);
+        if (currentDevice.equals("out")) {
+            return visitedDac && visitedFft ? 1 : 0;
         }
-        PassageCounts ans = new PassageCounts();
-        for (String destinationDevice : cableMap.get(currentDataPath.getCurrentDevice())) {
-            if (currentDataPath.hasVisited(destinationDevice)) {
-                continue;
-            }
-            Path destinationDevicePath = new Path(currentDataPath);
-            destinationDevicePath.visit(destinationDevice);
-            PassageCounts pathsFromDestinationDeviceThroughDacAndFftToOut = pathsFromDeviceThroughDacAndFftToOut(destinationDevicePath, memo, cableMap, debug);
-            ans.setDacCount(ans.getDacCount() + pathsFromDestinationDeviceThroughDacAndFftToOut.getDacCount());
-            ans.setFftCount(ans.getFftCount() + pathsFromDestinationDeviceThroughDacAndFftToOut.getFftCount());
-            ans.setDacAndFftCount(ans.getDacAndFftCount() + pathsFromDestinationDeviceThroughDacAndFftToOut.getDacAndFftCount());
+        if (currentDevice.equals("dac")) {
+            visitedDac = true;
         }
+        if (currentDevice.equals("fft")) {
+            visitedFft = true;
+        }
+        long ans = 0L;
+        for (String destinationDevice : cableMap.get(currentDevice)) {
+            long paths = pathsFromDeviceThroughDacAndFftToOut(destinationDevice, memo, cableMap, debug,
+                    visitedDac, visitedFft);
+            ans += paths;
+        }
+        memo.put(hashKey, ans);
         return ans;
     }
 }
