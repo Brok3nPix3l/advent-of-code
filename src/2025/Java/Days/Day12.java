@@ -55,21 +55,30 @@ public class Day12 implements DailyChallenge {
                 System.out.println("presents: " + presents);
                 System.out.println("trees: " + trees);
             }
+            int treesDeemedImpractical = 0;
             for (int i = 0; i < trees.size(); i++) {
                 Tree tree = trees.get(i);
                 if (!tree.isFeasibleToPlacePresents(presents, debug, i)) {
+                    treesDeemedImpractical++;
                     continue;
                 }
-                if (tree.canPlaceAllPresents(presents, debug)) {
-                    if (debug) {
-                        System.out.println("can place all presents under tree " + i);
-                    }
-                    ans++;
-                } else {
-                    if (debug) {
-                        System.out.println("can not place all presents under tree " + i);
-                    }
-                }
+                System.out.println("can place all presents under tree " + i);
+                ans++;
+                continue;
+//                if (tree.canPlaceAllPresents(presents, debug)) {
+//                    if (debug) {
+//                        System.out.println("can place all presents under tree " + i);
+//                    }
+//                    ans++;
+//                } else {
+//                    if (debug) {
+//                        System.out.println("can not place all presents under tree " + i);
+//                    }
+//                }
+            }
+            if (debug) {
+                System.out.println(treesDeemedImpractical + "/" + trees.size() + " trees were deemed impractical");
+                System.out.println("blindly assuming that the other " + (trees.size() - treesDeemedImpractical) + " work");
             }
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
